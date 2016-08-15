@@ -15,11 +15,13 @@ nginx:
     # certificates
     - ./nginx/ca/server.crt/:/etc/nginx/server.crt:ro
     - ./nginx/ca/server.key/:/etc/nginx/server.key:ro
+  volumes_from:
+    - data
   links:
-    - fpm:__DOCKER_PHP_FPM__
+    - php-fpm:__DOCKER_PHP_FPM__
 
 # php-fpm
-fpm:
+php-fpm:
   build: ./php-fpm
   ports:
     - "9000:9000"
@@ -27,6 +29,8 @@ fpm:
     - ./app/src:/usr/share/nginx/html
     # Your php.ini
     - ./php-fpm/php.ini-production:/usr/local/etc/php/php.ini:ro
+  volumes_from:
+   - data
   # environment:
     # Set your APP env variables here:
     # - APP_KEY=
@@ -40,11 +44,32 @@ fpm:
 # database
 mysql:
   image: mysql:latest
-  ports:
-    # Allow client to access 3306
-    - "3306:3306"
+  # ports:
+  #   # Allow client to access 3306
+  #   - "3306:3306"
   volumes:
     # NOTE: your data will be stored in ./mysql
     - ./mysql:/var/lib/mysql
   environment:
     - MYSQL_ROOT_PASSWORD=toor
+#######################################
+# phpmyadmin
+# alias phpmyadmin='docker run --rm --name phpmyadmin -e PMA_HOST=192.168.1.100 -p 8080:80 phpmyadmin/phpmyadmin "$@"'
+# alias phpmyadmin='docker run --rm --name phpmyadmin --link mariadb:db -p 8080:80 phpmyadmin/phpmyadmin "$@"'
+#######################################
+phpmyadmin:
+  image: phpmyadmin/phpmyadmin
+  ports:
+    - 8080:80
+  links:
+    - mysql:db
+
+#######################################
+# data
+#######################################
+data:
+  image: busybox
+  volumes:
+   - ~/data:/data
+  # volumes_from:
+  #  - data
